@@ -21,7 +21,7 @@ public class ContactController implements BaseController<ContactDto> {
         this.contactService = contactService;
     }
 
-    @PostMapping("/add")
+    @PostMapping(value="/add", headers="X-API-Version=1")
     public ResponseEntity<?> create(@RequestBody ContactDto body) {
         try {
             // TODO: remember to validate jwt and check if user is admin or manager - this should allow any req though
@@ -42,7 +42,7 @@ public class ContactController implements BaseController<ContactDto> {
         }
     }
 
-    @GetMapping("/view-all")
+    @GetMapping(value="/view-all", headers="X-API-Version=1")
     public ResponseEntity<?> handleGetRequest(@RequestParam String userId) {
         try {
             //TODO: remeber to get userId from decrypted token

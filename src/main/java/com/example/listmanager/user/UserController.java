@@ -22,7 +22,7 @@ public class UserController implements BaseController<UserDto> {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
+    @PostMapping(value="/register", headers="X-API-Version=1")
     public ResponseEntity<?> create(@RequestBody UserDto userDto) {
         try {
             ServiceResult result = userService.create(userDto);
@@ -45,7 +45,7 @@ public class UserController implements BaseController<UserDto> {
         }
     }
 
-    @PostMapping("/login")
+    @PostMapping(value="/login", headers="X-API-Version=1")
     public ResponseEntity<?> login(@RequestBody UserDto userDto) {
         try {
             ServiceResult result = userService.login(userDto);
