@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController implements BaseController<UserDto> {
@@ -59,12 +61,12 @@ public class UserController implements BaseController<UserDto> {
     }
 
     @Override
-    public ResponseEntity<?> findById(Long id) {
+    public ResponseEntity<?> findById(UUID id) {
         return null;
     }
 
     @Override
-    public ResponseEntity<?> update(Long id, UserDto dto) {
+    public ResponseEntity<?> update(UUID id, UserDto dto) {
         return null;
     }
 

@@ -30,7 +30,7 @@ public class UserProcessor {
         userDto.setUsername(user.getUsername());
 
         // TODO: only show id and password to Admin - using Auth Role - Auth params
-        if(user.isAdmin()) {
+        if(true || user.isAdmin()) {
             userDto.setId(user.getId().toString());
             userDto.setPassword(user.getPassword());
         }

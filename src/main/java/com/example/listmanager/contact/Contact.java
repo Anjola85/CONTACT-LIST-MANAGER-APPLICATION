@@ -9,7 +9,12 @@ import java.util.UUID;
 
 
 @Entity(name="contacts")
-@Table(uniqueConstraints = { @UniqueConstraint(name = "UniqueEmailAndPhone", columnNames = { "phoneNumber", "email" }) })
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(name = "UniqueEmailForUser", columnNames = { "userId", "email" }),
+                @UniqueConstraint(name = "UniquePhoneNumberForUser", columnNames = { "userId", "phoneNumber" })
+        }
+)
 public class Contact {
     private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
@@ -105,6 +110,14 @@ public class Contact {
 
     public void setDateUpdated(String dateUpdated) {
         this.dateUpdated = dateUpdated;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     @PrePersist

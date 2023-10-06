@@ -9,6 +9,8 @@ import java.util.List;
 
 @Data
 public class ContactDto {
+    @JsonProperty("id")
+    private String id = null;
     @JsonProperty("userId")
     private String userId;
     @JsonProperty("firstName")
@@ -21,10 +23,8 @@ public class ContactDto {
     private String email;
     @JsonProperty("address")
     private String address;
-
-    @JsonProperty("notes")
-    private List<NoteDto> notes = null;
-
+    @JsonProperty("note")
+    private NoteDto note = null;
     @JsonProperty("dateUpdated")
     private String dateUpdated;
     @JsonProperty("dateCreated")
