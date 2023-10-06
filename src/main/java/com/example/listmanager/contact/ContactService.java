@@ -153,6 +153,28 @@ public class ContactService implements BaseService<ContactDto> {
 
     }
 
+    @Override
+    public ServiceResult<ContactDto> delete(UUID contactId) {
+        Optional<Contact> existingContact = contactRepository.findById(contactId);
+
+        if (existingContact.isEmpty()) {
+            return new ServiceResult(HttpStatus.NOT_FOUND, "Contact not found");
+        }
+
+        // Delete the associated note, if it exists
+        ServiceResult<NoteDto> noteResp = noteService.findByContactId(contactId.toString());
+
+        ServiceResult<NoteDto>  resp;
+        if(noteResp.getStatus().is2xxSuccessful())
+            resp = noteService.delete(UUID.fromString(noteResp.getData().get(0).getId()));
+
+        // Delete the contact
+        contactRepository.deleteById(contactId);
+
+        return new ServiceResult(HttpStatus.OK, "Contact and associated note deleted successfully");
+
+    }
+
     // ADMIN role
     // get all contacts with same userId - might need pagination
 
@@ -170,9 +192,8 @@ public class ContactService implements BaseService<ContactDto> {
 
 
     // MANAGER ROLE
-    public ServiceResult<List<ContactDto>> findContactbyUserId(String userId) {
+    public ServiceResult<List<ContactDto>> findContactbyUserId(UUID id) {
         try {
-            UUID id = UUID.fromString(userId);
 
             Page<Contact> contactPage = contactRepository.findContactsByUserId(id, Pageable.unpaged());
 

@@ -13,4 +13,6 @@ public interface BaseService<T> {
     ServiceResult<T> findById(UUID id);
 
     ServiceResult<T> update(T dto);
+
+    ServiceResult<T> delete(UUID id);
 }

@@ -46,7 +46,7 @@ public class ContactController implements BaseController<ContactDto> {
     public ResponseEntity<?> handleGetRequest(@RequestParam String userId) {
         try {
             //TODO: remeber to get userId from decrypted token
-            ServiceResult result = this.contactService.findContactbyUserId(userId);
+            ServiceResult result = this.contactService.findContactbyUserId(UUID.fromString(userId));
             ResponseHandler<ContactDto> resp = new ResponseHandler<>();
             return resp.handleResponse(result);
         } catch (DataAccessException e) {

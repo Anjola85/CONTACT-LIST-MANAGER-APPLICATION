@@ -1,6 +1,9 @@
 package com.example.listmanager.user;
 
 import com.example.listmanager.ConfigModel.BaseService;
+import com.example.listmanager.contact.Contact;
+import com.example.listmanager.contact.ContactDto;
+import com.example.listmanager.contact.ContactService;
 import com.example.listmanager.util.dto.ServiceResult;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.crypto.password.PasswordEncoder;
@@ -8,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpServerErrorException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,12 +23,14 @@ public class UserService implements BaseService<UserDto> {
     private final UserRepository userRepository;
     private UserProcessor userProcessor;
     private ServiceResult<UserDto> response;
+    private ContactService contactService;
 
     @Autowired
-    public UserService(UserRepository userRepository, UserProcessor userProcessor, ServiceResult response) {
+    public UserService(UserRepository userRepository, UserProcessor userProcessor, ServiceResult response, ContactService contactService) {
         this.userRepository = userRepository;
         this.userProcessor = userProcessor;
         this.response = response;
+        this.contactService = contactService;
     }
 
     public ServiceResult create(UserDto userDto) {
@@ -88,6 +94,26 @@ public class UserService implements BaseService<UserDto> {
     @Override
     public ServiceResult<UserDto> update(UserDto dto) {
         return null;
+    }
+
+    @Override
+    public ServiceResult<UserDto> delete(UUID id) {
+
+        Optional<User> existingUser = userRepository.findById(id);
+
+        if (existingUser.isEmpty())
+            return new ServiceResult(HttpStatus.NOT_FOUND, "User not found");
+
+
+        // Delete all contacts associated with the user
+        ServiceResult<List<ContactDto>> resp = contactService.findContactbyUserId(id);
+        List<ContactDto> userContacts = resp.getData().get(0);
+        userContacts.forEach(contact -> contactService.delete(UUID.fromString(contact.getId())));
+
+        // Delete the user
+        userRepository.deleteById(id);
+
+        return new ServiceResult(HttpStatus.OK, "User, contacts, and notes deleted successfully");
     }
 
     public User changePassword(String username, String currentPassword, String newPassword) {

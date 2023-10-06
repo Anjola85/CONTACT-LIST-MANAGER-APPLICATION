@@ -2,6 +2,7 @@ package com.example.listmanager.note;
 
 import com.example.listmanager.ConfigModel.BaseService;
 import com.example.listmanager.util.dto.ServiceResult;
+import org.aspectj.weaver.ast.Not;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -82,6 +83,16 @@ public class NoteService implements BaseService<NoteDto> {
     @Override
     public ServiceResult<NoteDto> update(NoteDto dto) {
         return this.create(dto);
+    }
+
+    @Override
+    public ServiceResult<NoteDto> delete(UUID id) {
+        Optional<Note> noteResp = this.noteRepository.findById(id);
+
+        if(noteResp.isPresent())
+            this.noteRepository.delete(noteResp.get());
+
+        return new ServiceResult(HttpStatus.OK, "Successfully deleted", noteResp);
     }
 
     private static ServiceResult validateInput(NoteDto dto) {
