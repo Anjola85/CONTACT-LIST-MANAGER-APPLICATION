@@ -7,15 +7,21 @@ import com.example.listmanager.note.NoteService;
 import com.example.listmanager.user.User;
 import com.example.listmanager.user.UserService;
 import com.example.listmanager.util.dto.ServiceResult;
+import com.example.listmanager.util.helper.ResponseHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Service
 public class ContactService implements BaseService<ContactDto> {
@@ -56,7 +62,6 @@ public class ContactService implements BaseService<ContactDto> {
         ServiceResult userResp = userService.findById(contact.getUserId());
         if(userResp.getStatus().isError() || userResp.getData() == null)
             return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
-
 
 
         // create the contact for that user, create a note also if a note was added
@@ -103,6 +108,61 @@ public class ContactService implements BaseService<ContactDto> {
     // all operation the manager can perform should be within a userId
 
 
+    // MANAGER ROLE
+    public ServiceResult<List<ContactDto>> findContactbyUserId(String userId) {
+        try {
+            UUID id = UUID.fromString(userId);
+
+            Page<Contact> contactPage = contactRepository.findContactsByUserId(id, Pageable.unpaged());
+
+            if (contactPage.isEmpty())
+                return new ServiceResult( HttpStatus.OK, "Contact is empty", contactPage.get());
+
+            // Map each contact to ContactDto
+            List<ContactDto> contactList = contactPage.getContent()
+                    .stream()
+                    .map(contact -> contactProcessor.mapContactInfoToDto(contact)) // Assuming ContactDtoMapper is your mapper class
+                    .toList();
+
+            CompletableFuture<List<ContactDto>> enrichedContactsFuture = enrichContactsWithNotesAsync(contactList);
+
+            List<ContactDto> enrichedContacts = enrichedContactsFuture.get();
+
+            return new ServiceResult(HttpStatus.OK, "Contacts successfully retrieved", enrichedContacts);
+        } catch (IllegalArgumentException e) {
+            return new ServiceResult( HttpStatus.BAD_REQUEST, "Invalid userId");
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Async
+    public CompletableFuture<List<ContactDto>> enrichContactsWithNotesAsync(List<ContactDto> dto) {
+        List<CompletableFuture<ContactDto>> futures = dto.stream()
+                .map(contact -> {
+                    String contactId = contact.getId();
+
+                    return CompletableFuture.supplyAsync(() -> {
+                        ServiceResult<NoteDto> noteResult = noteService.findByContactId(contactId);
+
+                        if (!noteResult.getStatus().isError()) {
+                            contact.setNote(noteResult.getData().get(0));
+                        }
+                        return contact;
+                    });
+                })
+                .collect(Collectors.toList());
+
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+
+        return allOf.thenApply(ignored -> {
+            return futures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+        });
+    }
 
     // get all contacts with respect to UserId in order of FirstName
 

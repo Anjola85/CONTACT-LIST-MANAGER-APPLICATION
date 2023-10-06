@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,16 @@ public class NoteService implements BaseService<NoteDto> {
         }
         NoteDto savedNote = noteProcessor.mapNoteInfoToDto(noteRepository.save(note));
         return new ServiceResult<>(HttpStatus.CREATED, "Note added successfully", savedNote);
+    }
+
+    public ServiceResult<NoteDto> findByContactId(String id) {
+        UUID contactId = UUID.fromString(id);
+        Optional<Note> note = this.noteRepository.findByContactId(contactId);
+        if(note.isPresent()) {
+            NoteDto noteDto = noteProcessor.mapNoteInfoToDto(note.get());
+            return new ServiceResult(HttpStatus.OK, "Found Note", noteDto);
+        }
+        return new ServiceResult(HttpStatus.NOT_FOUND, "Note does not exist");
     }
 
     @Override
