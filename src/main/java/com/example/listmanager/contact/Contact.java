@@ -16,8 +16,6 @@ import java.util.UUID;
         }
 )
 public class Contact {
-    private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -123,12 +121,12 @@ public class Contact {
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-        dateCreated = now.format(ISO_DATE_TIME_FORMATTER);
-        dateUpdated = now.format(ISO_DATE_TIME_FORMATTER);
+        dateCreated = now.format(DateTimeFormatter.ISO_DATE_TIME);
+        dateUpdated = now.format(DateTimeFormatter.ISO_DATE_TIME);
     }
 
     @PreUpdate
     protected void onUpdate() {
-        dateUpdated = LocalDateTime.now().format(ISO_DATE_TIME_FORMATTER);
+        dateUpdated = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
     }
 }

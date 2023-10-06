@@ -8,9 +8,9 @@ import java.util.UUID;
 @Data
 public class NoteDto {
     @JsonProperty("id")
-    private String id = null;
+    private String id;
     @JsonProperty
-    private String contactId = null;
+    private String contactId;
     @JsonProperty("noteText")
     private String noteText;
     @JsonProperty("dateUpdated")

@@ -75,7 +75,14 @@ public class UserService implements BaseService<UserDto> {
 
     @Override
     public ServiceResult<UserDto> findById(UUID id) {
-        return null;
+        Optional<User> respEntity =this.userRepository.findById(id);
+
+        if(respEntity.isPresent()) {
+            UserDto user = userProcessor.mapUserInfoToDto(respEntity.get());
+            return new ServiceResult(HttpStatus.OK, "Got back user successfully", user);
+        }
+
+        return new ServiceResult(HttpStatus.NOT_FOUND, "User not found");
     }
 
     @Override

@@ -4,6 +4,8 @@ import com.example.listmanager.ConfigModel.BaseService;
 import com.example.listmanager.note.Note;
 import com.example.listmanager.note.NoteDto;
 import com.example.listmanager.note.NoteService;
+import com.example.listmanager.user.User;
+import com.example.listmanager.user.UserService;
 import com.example.listmanager.util.dto.ServiceResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,12 +22,14 @@ public class ContactService implements BaseService<ContactDto> {
     private ContactRepository contactRepository;
     private ContactProcessor contactProcessor;
     private NoteService noteService;
+    private UserService userService;
 
     @Autowired
-    ContactService(ContactRepository contactRepository, ContactProcessor contactProcessor, NoteService noteService) {
+    ContactService(ContactRepository contactRepository, ContactProcessor contactProcessor, NoteService noteService, UserService userService) {
         this.contactRepository = contactRepository;
         this.contactProcessor = contactProcessor;
         this.noteService = noteService;
+        this.userService = userService;
     }
 
     @Override
@@ -39,19 +43,27 @@ public class ContactService implements BaseService<ContactDto> {
         // cannot create contact with same phone or email, check if they exist already
         Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndEmail(contact.getUserId(), contact.getEmail());
         // check again with phone number
-        if(entityResp.isEmpty())
-            entityResp = contactRepository.findContactByUserIdAndPhoneNumber(contact.getUserId(), contact.getPhoneNumber(), Pageable.unpaged());
+        if(entityResp.get().isEmpty())
+            entityResp = contactRepository.findContactByUserIdAndPhoneNumber(contact.getUserId(), contact.getPhoneNumber());
 
         // if exists, return the contact with error message
-        if(entityResp.isPresent()) {
+        if(!entityResp.get().isEmpty()) {
             resp = contactProcessor.mapContactInfoToDto(entityResp.get().get(0));
-            return new ServiceResult(HttpStatus.CONFLICT, "Contact already exists", resp);
+            return new ServiceResult(HttpStatus.CONFLICT, "Contact already exists");
         }
+
+        // validate userId
+        ServiceResult userResp = userService.findById(contact.getUserId());
+        if(userResp.getStatus().isError() || userResp.getData() == null)
+            return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
+
+
 
         // create the contact for that user, create a note also if a note was added
         resp = contactProcessor.mapContactInfoToDto(contactRepository.save(contact));
 
-        if(dto.getNote().getNoteText() != null) {
+        // create note for contact if it was added
+        if(dto.getNote() != null && dto.getNote().getNoteText() != null) {
             dto.getNote().setContactId(resp.getId());
             NoteDto note = this.noteService.create(dto.getNote()).getData().get(0);
             resp.setNote(note);

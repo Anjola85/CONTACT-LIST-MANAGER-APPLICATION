@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/addContact")
+@RequestMapping("/api/contact")
 public class ContactController implements BaseController<ContactDto> {
     private final ContactService contactService;
 
@@ -23,17 +24,24 @@ public class ContactController implements BaseController<ContactDto> {
         this.contactService = contactService;
     }
 
-    @Override
+    @PostMapping("/add")
     public ResponseEntity<?> create(@RequestBody ContactDto body) {
         try {
-            // TODO: remember to validate jwt and check if user is admin or manager - this should allow any though
+            // TODO: remember to validate jwt and check if user is admin or manager - this should allow any req though
+            // TODO: also should be pulling userId from JWT token attached
             ServiceResult result = contactService.create(body);
             ResponseHandler<ContactDto> resp = new ResponseHandler<>();
             return resp.handleResponse(result);
         } catch (DataAccessException e) {
-            return new ResponseEntity<>("Database access error", HttpStatus.INTERNAL_SERVER_ERROR);
+            String message = "Database error with message: " + e.getMessage();
+            ServiceResult result = new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, message);
+            ResponseHandler<ContactDto> resp = new ResponseHandler<>();
+            return resp.handleResponse(result);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong");
+            String message = "Something went wrong with message: " + e.getMessage();
+            ServiceResult result = new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, message);
+            ResponseHandler<ContactDto> resp = new ResponseHandler<>();
+            return resp.handleResponse(result);
         }
     }
 

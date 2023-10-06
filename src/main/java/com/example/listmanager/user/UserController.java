@@ -1,6 +1,7 @@
 package com.example.listmanager.user;
 
 import com.example.listmanager.ConfigModel.BaseController;
+import com.example.listmanager.contact.ContactDto;
 import com.example.listmanager.util.dto.ServiceResult;
 import com.example.listmanager.util.helper.ResponseHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +33,15 @@ public class UserController implements BaseController<UserDto> {
             }
             return response.handleResponse(result);
         } catch (DataAccessException e) {
-            return new ResponseEntity<>("Database access error", HttpStatus.INTERNAL_SERVER_ERROR);
+            String message = "Database error with message: " + e.getMessage();
+            ServiceResult result = new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, message);
+            ResponseHandler<ContactDto> resp = new ResponseHandler<>();
+            return resp.handleResponse(result);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong");
+            String message = "Something went wrong with message: " + e.getMessage();
+            ServiceResult result = new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, message);
+            ResponseHandler<ContactDto> resp = new ResponseHandler<>();
+            return resp.handleResponse(result);
         }
     }
 
