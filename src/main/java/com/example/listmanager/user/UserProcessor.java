@@ -6,9 +6,6 @@ import org.springframework.context.annotation.Configuration;
 /**
  * This class handles the business use case mapping of user
  */
-
-
-
 @Configuration
 public class UserProcessor {
 
@@ -34,7 +31,7 @@ public class UserProcessor {
 
         // TODO: only show id and password to Admin - using Auth Role - Auth params
         if(user.isAdmin()) {
-            userDto.setId(user.getId());
+            userDto.setId(user.getId().toString());
             userDto.setPassword(user.getPassword());
         }
         userDto.setUserRole(user.getRole());

@@ -68,21 +68,4 @@ public class UserController implements BaseController<UserDto> {
         return null;
     }
 
-    @GetMapping("/test")
-    public ResponseEntity<?> test() {
-        ServiceResult<String> output = new ServiceResult<>(HttpStatus.OK, "Just a test");
-        ResponseHandler<String> response = new ResponseHandler<>();
-        return response.handleResponse(output);
-    }
-
-    @PostMapping("/test-registeration")
-    public ResponseEntity<?> reg(@RequestBody UserDto body) {
-        // this will be moved into the service
-//        User user = userProcessor.mapUserInfo(body);
-
-        ServiceResult<User> output = userService.create(body);
-        ResponseHandler<User> response = new ResponseHandler<>();
-        return response.handleResponse(output);
-    }
-
 }

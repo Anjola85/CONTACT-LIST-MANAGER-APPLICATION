@@ -8,7 +8,7 @@ import java.util.UUID;
 @Data
 public class UserDto {
     @JsonProperty("id")
-    private UUID id = null;
+    private String id = null;
     @JsonProperty("username")
     private String username;
     @JsonProperty("role")

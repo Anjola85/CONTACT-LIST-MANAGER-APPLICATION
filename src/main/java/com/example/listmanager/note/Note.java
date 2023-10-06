@@ -1,39 +1,24 @@
-package com.example.listmanager.contact;
+package com.example.listmanager.note;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-
-@Entity(name="contacts")
-@Table(uniqueConstraints = { @UniqueConstraint(name = "UniqueEmailAndPhone", columnNames = { "phoneNumber", "email" }) })
-public class Contact {
+@Entity(name = "notes")
+public class Note {
     private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(nullable = false)
-    private UUID userId;
-
-    @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
-
-    @Column(nullable = false)
-    private String phoneNumber;
-
     @Column(nullable = false, unique = true)
-    private String email;
+    private UUID contactId;
 
     @Column(nullable = false)
-    private String address;
+    private String noteText;
 
     @Column(nullable = false)
     private String dateCreated;
@@ -41,7 +26,7 @@ public class Contact {
     @Column(nullable = false)
     private String dateUpdated;
 
-    public Contact() {}
+    public Note() {}
 
     public UUID getId() {
         return id;
@@ -51,44 +36,20 @@ public class Contact {
         this.id = id;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public UUID getContactId() {
+        return contactId;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setContactId(UUID contactId) {
+        this.contactId = contactId;
     }
 
-    public String getLastName() {
-        return lastName;
+    public String getNoteText() {
+        return noteText;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
+    public void setNoteText(String noteText) {
+        this.noteText = noteText;
     }
 
     public String getDateCreated() {
