@@ -1,0 +1,11 @@
+services:
+  database:
+    container_name: list-manager-db
+    image: postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=list-manager-db
+    restart: unless-stopped
