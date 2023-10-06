@@ -73,7 +73,7 @@ public class UserController implements BaseController<UserDto> {
     }
 
     @Override
-    public ResponseEntity<?> update(UUID id, UserDto dto) {
+    public ResponseEntity<?> update(UserDto dto) {
         return null;
     }
 

@@ -13,5 +13,5 @@ public interface BaseController<T> {
 
     ResponseEntity<?> findById(@PathVariable UUID id);
 
-    ResponseEntity<?> update(@PathVariable UUID id, @RequestBody T dto);
+    ResponseEntity<?> update(@RequestBody T body);
 }

@@ -88,8 +88,69 @@ public class ContactService implements BaseService<ContactDto> {
     }
 
     @Override
-    public ServiceResult<ContactDto> update(UUID id, ContactDto dto) {
-        return null;
+    public ServiceResult<ContactDto> update(ContactDto dto) {
+        ServiceResult badRequest = validateInput(dto);
+        if (badRequest != null)
+            return badRequest;
+
+        // map
+        Contact contactEntity = contactProcessor.mapContactInfoToEntity(dto);
+
+        Optional<Contact> existingContact = contactRepository.findById(contactEntity.getId());
+
+        if (existingContact.isEmpty())
+            return new ServiceResult(HttpStatus.NOT_FOUND, "Unable to update, contact not found");
+
+        // Validate userId
+        ServiceResult userResp = userService.findById(contactEntity.getUserId());
+        if (userResp.getStatus().isError() || userResp.getData() == null) {
+            return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
+        }
+
+        Contact updatedContact = existingContact.get();
+        ContactDto resp;
+
+        // Check if the updated email already exists for another contact
+        if (!dto.getEmail().equals(updatedContact.getEmail())) {
+            Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndEmail(updatedContact.getUserId(), dto.getEmail());
+            if (!entityResp.get().isEmpty())
+                return new ServiceResult(HttpStatus.CONFLICT, "Email already exists");
+        }
+
+        // Check if the updated phone number already exists for another contact
+        if (!dto.getPhoneNumber().equals(updatedContact.getPhoneNumber())) {
+            Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndPhoneNumber(updatedContact.getUserId(), dto.getPhoneNumber());
+            if (!entityResp.get().isEmpty()) {
+                return new ServiceResult(HttpStatus.CONFLICT, "Phone number already exists");
+            }
+        }
+
+
+        // Update the contact with the new data
+        updatedContact.setFirstName(dto.getFirstName());
+        updatedContact.setLastName(dto.getLastName());
+        updatedContact.setEmail(dto.getEmail());
+        updatedContact.setPhoneNumber(dto.getPhoneNumber());
+        updatedContact.setAddress(dto.getAddress());
+
+        // Save the updated contact
+        resp = contactProcessor.mapContactInfoToDto(contactRepository.save(updatedContact));
+
+        // Check if notes were provided and, if so, update the note
+        if (dto.getNote() != null && dto.getNote().getNoteText() != null) {
+            NoteDto noteDto = dto.getNote();
+            noteDto.setContactId(updatedContact.getId().toString());
+            ServiceResult<NoteDto> noteResult = noteService.create(noteDto);
+
+            if (noteResult.getStatus().isError()) {
+                return new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update note");
+            }
+
+            resp.setNote(noteResult.getData().get(0));
+        }
+
+        return new ServiceResult(HttpStatus.OK, "Successfully updated Contact", resp);
+
     }
 
     // ADMIN role

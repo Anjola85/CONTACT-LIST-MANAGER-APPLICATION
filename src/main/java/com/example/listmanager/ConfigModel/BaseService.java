@@ -12,5 +12,5 @@ public interface BaseService<T> {
 
     ServiceResult<T> findById(UUID id);
 
-    ServiceResult<T> update(UUID id, T dto);
+    ServiceResult<T> update(T dto);
 }

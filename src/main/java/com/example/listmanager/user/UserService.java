@@ -86,7 +86,7 @@ public class UserService implements BaseService<UserDto> {
     }
 
     @Override
-    public ServiceResult<UserDto> update(UUID id, UserDto dto) {
+    public ServiceResult<UserDto> update(UserDto dto) {
         return null;
     }
 

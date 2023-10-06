@@ -73,8 +73,24 @@ public class ContactController implements BaseController<ContactDto> {
     }
 
     @Override
-    public ResponseEntity<?> update(UUID id, ContactDto dto) {
-        return null;
+    public ResponseEntity<?> update(@RequestBody ContactDto body) {
+        try {
+            //TODO: remeber to get userId from decrypted token
+            // set the userId from the JWT
+            ServiceResult result = this.contactService.update(body);
+            ResponseHandler<ContactDto> resp = new ResponseHandler<>();
+            return resp.handleResponse(result);
+        } catch (DataAccessException e) {
+            String message = "Database error with message: " + e.getMessage();
+            ServiceResult result = new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, message);
+            ResponseHandler<ContactDto> resp = new ResponseHandler<>();
+            return resp.handleResponse(result);
+        } catch (Exception e) {
+            String message = "Something went wrong with message: " + e.getMessage();
+            ServiceResult result = new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, message);
+            ResponseHandler<ContactDto> resp = new ResponseHandler<>();
+            return resp.handleResponse(result);
+        }
     }
 
 }

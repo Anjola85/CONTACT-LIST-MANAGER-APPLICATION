@@ -80,7 +80,7 @@ public class NoteService implements BaseService<NoteDto> {
     }
 
     @Override
-    public ServiceResult<NoteDto> update(UUID id, NoteDto dto) {
+    public ServiceResult<NoteDto> update(NoteDto dto) {
         return this.create(dto);
     }
 
