@@ -3,6 +3,8 @@ package com.example.listmanager.user;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Entity(name="users")
@@ -15,10 +17,29 @@ public class User {
     @Column
     private String password;
     @Enumerated(EnumType.STRING)
-    private UserRole role = UserRole.MANAGER;
+    private UserRole role;
+    @Column
+    private String dateCreated;
+    @Column
+    private String dateUpdated;
+
+    private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
 
     public User() {}
 
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        dateCreated = now.format(ISO_DATE_TIME_FORMATTER);
+        dateUpdated = now.format(ISO_DATE_TIME_FORMATTER);
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dateUpdated = LocalDateTime.now().format(ISO_DATE_TIME_FORMATTER);
+    }
     public UUID getId() {
         return id;
     }
@@ -51,16 +72,24 @@ public class User {
         this.role = role;
     }
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", role=" + role +
-                '}';
+    public String getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(String dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    public String getDateUpdated() {
+        return dateUpdated;
+    }
+
+    public void setDateUpdated(String dateUpdated) {
+        this.dateUpdated = dateUpdated;
     }
 
     public boolean isAdmin() {
         return this.getRole().equals(UserRole.ADMIN);
     }
+
 }
