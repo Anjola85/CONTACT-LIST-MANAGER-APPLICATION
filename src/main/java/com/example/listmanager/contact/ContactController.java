@@ -73,6 +73,7 @@ public class ContactController implements BaseController<ContactDto> {
     }
 
     @Override
+    @PatchMapping(value="/update", headers="X-API-Version=1")
     public ResponseEntity<?> update(@RequestBody ContactDto body) {
         try {
             //TODO: remeber to get userId from decrypted token

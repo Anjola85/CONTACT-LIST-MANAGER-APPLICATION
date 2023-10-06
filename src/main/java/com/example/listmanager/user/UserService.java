@@ -1,15 +1,12 @@
 package com.example.listmanager.user;
 
 import com.example.listmanager.ConfigModel.BaseService;
-import com.example.listmanager.contact.Contact;
 import com.example.listmanager.contact.ContactDto;
 import com.example.listmanager.contact.ContactService;
 import com.example.listmanager.util.dto.ServiceResult;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,14 +19,12 @@ public class UserService implements BaseService<UserDto> {
     private final String USER_EXISTS_MESSAGE = "User already exists";
     private final UserRepository userRepository;
     private UserProcessor userProcessor;
-    private ServiceResult<UserDto> response;
     private ContactService contactService;
 
     @Autowired
-    public UserService(UserRepository userRepository, UserProcessor userProcessor, ServiceResult response, ContactService contactService) {
+    public UserService(UserRepository userRepository, UserProcessor userProcessor, ContactService contactService) {
         this.userRepository = userRepository;
         this.userProcessor = userProcessor;
-        this.response = response;
         this.contactService = contactService;
     }
 
@@ -49,7 +44,7 @@ public class UserService implements BaseService<UserDto> {
 
         User createduser = userRepository.save(newUser);
         userDto = userProcessor.mapUserInfoToDto(createduser);
-        return response.setStatus(HttpStatus.CREATED).setMessage(USER_CREATED_MESSAGE).setData(userDto);
+        return new ServiceResult(HttpStatus.CREATED, USER_CREATED_MESSAGE, userDto);
     }
 
     public ServiceResult login(UserDto userDto) {

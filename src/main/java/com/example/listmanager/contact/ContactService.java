@@ -1,20 +1,15 @@
 package com.example.listmanager.contact;
 
 import com.example.listmanager.ConfigModel.BaseService;
-import com.example.listmanager.note.Note;
 import com.example.listmanager.note.NoteDto;
 import com.example.listmanager.note.NoteService;
-import com.example.listmanager.user.User;
-import com.example.listmanager.user.UserService;
 import com.example.listmanager.util.dto.ServiceResult;
-import com.example.listmanager.util.helper.ResponseHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,14 +23,12 @@ public class ContactService implements BaseService<ContactDto> {
     private ContactRepository contactRepository;
     private ContactProcessor contactProcessor;
     private NoteService noteService;
-    private UserService userService;
 
     @Autowired
-    ContactService(ContactRepository contactRepository, ContactProcessor contactProcessor, NoteService noteService, UserService userService) {
+    ContactService(ContactRepository contactRepository, ContactProcessor contactProcessor, NoteService noteService) {
         this.contactRepository = contactRepository;
         this.contactProcessor = contactProcessor;
         this.noteService = noteService;
-        this.userService = userService;
     }
 
     @Override
@@ -59,9 +52,9 @@ public class ContactService implements BaseService<ContactDto> {
         }
 
         // validate userId
-        ServiceResult userResp = userService.findById(contact.getUserId());
-        if(userResp.getStatus().isError() || userResp.getData() == null)
-            return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
+//        ServiceResult userResp = userService.findById(contact.getUserId());
+//        if(userResp.getStatus().isError() || userResp.getData() == null)
+//            return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
 
 
         // create the contact for that user, create a note also if a note was added
@@ -102,10 +95,10 @@ public class ContactService implements BaseService<ContactDto> {
             return new ServiceResult(HttpStatus.NOT_FOUND, "Unable to update, contact not found");
 
         // Validate userId
-        ServiceResult userResp = userService.findById(contactEntity.getUserId());
-        if (userResp.getStatus().isError() || userResp.getData() == null) {
-            return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
-        }
+//        ServiceResult userResp = userService.findById(contactEntity.getUserId());
+//        if (userResp.getStatus().isError() || userResp.getData() == null) {
+//            return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
+//        }
 
         Contact updatedContact = existingContact.get();
         ContactDto resp;

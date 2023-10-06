@@ -2,14 +2,11 @@ package com.example.listmanager.note;
 
 import com.example.listmanager.ConfigModel.BaseService;
 import com.example.listmanager.util.dto.ServiceResult;
-import org.aspectj.weaver.ast.Not;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,15 +16,12 @@ import java.util.stream.Collectors;
 public class NoteService implements BaseService<NoteDto> {
     private NoteRepository noteRepository;
     private NoteProcessor noteProcessor;
-    private ServiceResult<NoteDto> response;
 
     @Autowired
     public NoteService(NoteRepository noteRepository,
-                       NoteProcessor noteProcessor,
-                       ServiceResult response) {
+                       NoteProcessor noteProcessor) {
         this.noteRepository = noteRepository;
         this.noteProcessor = noteProcessor;
-        this.response = response;
     }
 
     @Override
