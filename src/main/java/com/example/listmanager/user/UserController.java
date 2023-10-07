@@ -50,7 +50,7 @@ public class UserController implements BaseController<UserDto> {
     }
 
 //    @PreAuthorize("permitAll()")
-    @PostMapping(value="/login", headers="X-API-Version=1")
+    @PostMapping(value="/api/user/login", headers="X-API-Version=1")
     public ResponseEntity<?> login(@RequestBody UserDto userDto) {
         try {
             ServiceResult result = userService.login(userDto);
