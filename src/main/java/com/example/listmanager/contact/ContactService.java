@@ -83,13 +83,16 @@ public class ContactService implements BaseService<ContactDto> {
     @Override
     public ServiceResult<ContactDto> update(ContactDto dto) {
         ServiceResult badRequest = validateInput(dto);
-        if (badRequest != null)
-            return badRequest;
+        if (badRequest != null || (dto.getId() == null || dto.getId().isEmpty())){
+            if ((dto.getId() == null || dto.getId().isEmpty()))
+                return new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, "ContactId cannot be null");
+        return badRequest;
+        }
 
         // map
         Contact contactEntity = contactProcessor.mapContactInfoToEntity(dto);
 
-        Optional<Contact> existingContact = contactRepository.findById(contactEntity.getId());
+        Optional<Contact> existingContact = contactRepository.findContactByUserIdAndId(UUID.fromString(dto.getUserId()), contactEntity.getId());
 
         if (existingContact.isEmpty())
             return new ServiceResult(HttpStatus.NOT_FOUND, "Unable to update, contact not found");

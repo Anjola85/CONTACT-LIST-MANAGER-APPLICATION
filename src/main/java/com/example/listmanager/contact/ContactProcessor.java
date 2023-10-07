@@ -8,6 +8,8 @@ import java.util.UUID;
 public class ContactProcessor {
     public Contact mapContactInfoToEntity(ContactDto dto) {
         Contact entity = new Contact();
+        if(dto.getId() != null && !dto.getId().isEmpty())
+            entity.setId(UUID.fromString(dto.getId()));
         entity.setUserId(UUID.fromString(dto.getUserId()));
         entity.setAddress(dto.getAddress());
         entity.setEmail(dto.getEmail());

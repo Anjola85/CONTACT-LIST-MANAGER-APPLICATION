@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,10 +39,13 @@ public class NoteService implements BaseService<NoteDto> {
             Note noteEntity = resp.get();
 
             note.setId(noteEntity.getId());
-            // update the note text
-            BeanUtils.copyProperties(note, noteEntity);
+            note.setNoteText(noteEntity.getNoteText());
+            note.setContactId(noteEntity.getContactId());
+            note.setDateCreated(noteEntity.getDateCreated());
+            note.setDateUpdated(noteEntity.getDateUpdated());
         }
-        NoteDto savedNote = noteProcessor.mapNoteInfoToDto(noteRepository.save(note));
+        Note noteEntity = noteRepository.save(note);
+        NoteDto savedNote = noteProcessor.mapNoteInfoToDto(noteEntity);
         return new ServiceResult<>(HttpStatus.CREATED, "Note added successfully", savedNote);
     }
 

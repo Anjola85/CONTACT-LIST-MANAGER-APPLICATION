@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface NoteRepository extends JpaRepository<Note, UUID> {
     Optional<Note> findByContactId(UUID contactId);
+
 }

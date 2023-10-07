@@ -9,6 +9,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class UserController implements BaseController<UserDto> {
         this.userService = userService;
     }
 
+//    @PreAuthorize("permitAll()")
     @PostMapping(value="/register", headers="X-API-Version=1")
     public ResponseEntity<?> create(@RequestBody UserDto userDto) {
         try {
@@ -45,6 +47,7 @@ public class UserController implements BaseController<UserDto> {
         }
     }
 
+//    @PreAuthorize("permitAll()")
     @PostMapping(value="/login", headers="X-API-Version=1")
     public ResponseEntity<?> login(@RequestBody UserDto userDto) {
         try {

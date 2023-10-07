@@ -25,6 +25,7 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
     Page<Contact> findContactByDateUpdatedBefore(String date, Pageable pageable);
 
     // specific to a user
+    Optional<Contact> findContactByUserIdAndId(UUID userId, UUID contactId);
     Page<Contact> findContactsByUserId(UUID userId, Pageable pageable);
     Optional<List<Contact>> findContactByUserIdAndPhoneNumber(UUID userId, String phoneNumber);
     Optional<List<Contact>> findContactByUserIdAndEmail(UUID userId, String email);

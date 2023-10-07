@@ -18,7 +18,8 @@ public class NoteProcessor {
 
     public NoteDto mapNoteInfoToDto(Note note) {
         NoteDto dto = new NoteDto();
-        dto.setContactId(note.getContactId().toString());
+        if(note.getContactId() != null && !note.getContactId().toString().isEmpty())
+            dto.setContactId(note.getContactId().toString());
         dto.setNoteText(note.getNoteText());
         dto.setDateCreated(note.getDateCreated());
         dto.setDateUpdated(note.getDateUpdated());
