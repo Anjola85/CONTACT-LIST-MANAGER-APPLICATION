@@ -2,6 +2,7 @@ package com.example.listmanager.user;
 
 import com.example.listmanager.ConfigModel.BaseController;
 import com.example.listmanager.contact.ContactDto;
+import com.example.listmanager.jwt.JwtService;
 import com.example.listmanager.util.dto.ServiceResult;
 import com.example.listmanager.util.helper.ResponseHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,28 +10,30 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/user")
+//@RequestMapping("/api/user")
 public class UserController implements BaseController<UserDto> {
     private final UserService userService;
+    private final JwtService jwtService;
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, JwtService jwtService) {
         this.userService = userService;
+        this.jwtService = jwtService;
     }
 
-//    @PreAuthorize("permitAll()")
-    @PostMapping(value="/register", headers="X-API-Version=1")
+    @PostMapping(value="/api/user/register", headers="X-API-Version=1")
     public ResponseEntity<?> create(@RequestBody UserDto userDto) {
         try {
             ServiceResult result = userService.create(userDto);
             ResponseHandler<UserDto> response = new ResponseHandler<>();
             if (result.getStatus().is2xxSuccessful()) {
-                //TODO: generate JWT and add to response
-                return response.handleResponse(result, "exmplaeToken");
+                String token = jwtService.generateToken(userDto.getUsername());
+                return response.handleResponse(result, token);
             }
             return response.handleResponse(result);
         } catch (DataAccessException e) {
@@ -53,8 +56,8 @@ public class UserController implements BaseController<UserDto> {
             ServiceResult result = userService.login(userDto);
             ResponseHandler<UserDto> response = new ResponseHandler<>();
             if (result.getStatus().is2xxSuccessful()) {
-                //TODO: generate JWT and add to response
-                return response.handleResponse(result, "exmplaeToken");
+                String token = jwtService.generateToken(userDto.getUsername());
+                return response.handleResponse(result, token);
             }
             return response.handleResponse(result);
         } catch (DataAccessException e) {

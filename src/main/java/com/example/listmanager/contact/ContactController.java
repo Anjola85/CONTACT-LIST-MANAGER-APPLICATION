@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class ContactController implements BaseController<ContactDto> {
         this.contactService = contactService;
     }
 
+//    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PostMapping(value="/add", headers="X-API-Version=1")
     public ResponseEntity<?> create(@RequestBody ContactDto body) {
         try {
@@ -42,6 +44,7 @@ public class ContactController implements BaseController<ContactDto> {
         }
     }
 
+//    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @GetMapping(value="/view-all", headers="X-API-Version=1")
     public ResponseEntity<?> handleGetRequest(@RequestParam String userId) {
         try {
