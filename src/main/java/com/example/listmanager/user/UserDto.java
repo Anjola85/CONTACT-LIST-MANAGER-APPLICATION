@@ -21,4 +21,11 @@ public class UserDto {
     private String dateUpdated;
     @JsonProperty("isAdmin")
     private Boolean isAdmin = false;
+
+    public UserDto() {}
+
+    public UserDto(String username,String password) {
+        this.setUsername(username);
+        this.setPassword(password);
+    }
 }

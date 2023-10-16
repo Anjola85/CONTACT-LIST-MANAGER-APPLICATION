@@ -17,7 +17,7 @@ public class UserProcessor {
     public User mapUserInfoToEntity(UserDto user) {
         User newUser = new User();
        newUser.setUsername(user.getUsername());
-        // TODO: encoding the password before saving
+        // TODO: Add encoding the password before saving
 //        newUser.setPassword(passwordEncoder.encode(user.getPassword()));
        newUser.setPassword(user.getPassword());
        newUser.setRole(user.getUserRole());

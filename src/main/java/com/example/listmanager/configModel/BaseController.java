@@ -1,4 +1,4 @@
-package com.example.listmanager.ConfigModel;
+package com.example.listmanager.configModel;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;

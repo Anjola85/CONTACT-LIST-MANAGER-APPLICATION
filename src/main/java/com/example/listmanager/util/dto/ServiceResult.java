@@ -26,6 +26,11 @@ public class ServiceResult<T> {
 
     public ServiceResult() {}
 
+    public ServiceResult(String message) {
+        this.message = message;
+        this.status = HttpStatus.OK;
+    }
+
     public ServiceResult(HttpStatus status, String message) {
         this.status = status;
         this.message = message;

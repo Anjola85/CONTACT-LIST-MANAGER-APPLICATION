@@ -1,4 +1,4 @@
-package com.example.listmanager.ConfigModel;
+package com.example.listmanager.configModel;
 
 
 import com.example.listmanager.util.dto.ServiceResult;

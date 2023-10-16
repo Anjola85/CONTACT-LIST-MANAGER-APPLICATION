@@ -1,12 +1,17 @@
 package com.example.listmanager.contact;
 
-import com.example.listmanager.ConfigModel.BaseService;
+import com.example.listmanager.configModel.BaseService;
 import com.example.listmanager.note.NoteDto;
 import com.example.listmanager.note.NoteService;
 import com.example.listmanager.util.dto.ServiceResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -23,6 +28,7 @@ public class ContactService implements BaseService<ContactDto> {
     private ContactRepository contactRepository;
     private ContactProcessor contactProcessor;
     private NoteService noteService;
+    private static final Logger logger = LoggerFactory.getLogger(ContactService.class);
 
     @Autowired
     ContactService(ContactRepository contactRepository, ContactProcessor contactProcessor, NoteService noteService) {
@@ -33,165 +39,164 @@ public class ContactService implements BaseService<ContactDto> {
 
     @Override
     public ServiceResult<ContactDto> create(ContactDto dto) {
-        ServiceResult BAD_REQUEST = validateInput(dto);
-        if (BAD_REQUEST != null) return BAD_REQUEST;
+        try {
+            ServiceResult BAD_REQUEST = validateInput(dto);
+            if (BAD_REQUEST != null) return BAD_REQUEST;
 
-        Contact contact = contactProcessor.mapContactInfoToEntity(dto);
-        ContactDto resp;
+            Contact contact = contactProcessor.mapContactInfoToEntity(dto);
 
-        // cannot create contact with same phone or email, check if they exist already
-        Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndEmail(contact.getUserId(), contact.getEmail());
-        // check again with phone number
-        if(entityResp.get().isEmpty())
-            entityResp = contactRepository.findContactByUserIdAndPhoneNumber(contact.getUserId(), contact.getPhoneNumber());
+            ContactDto resp;
 
-        // if exists, return the contact with error message
-        if(!entityResp.get().isEmpty()) {
-            resp = contactProcessor.mapContactInfoToDto(entityResp.get().get(0));
-            return new ServiceResult(HttpStatus.CONFLICT, "Contact already exists");
+            // cannot create contact with same phone or email, check if they exist already
+            Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndEmail(contact.getUserId(), contact.getEmail());
+            // check again with phone number
+            if(!entityResp.isPresent() || entityResp.get().isEmpty())
+                entityResp = contactRepository.findContactByUserIdAndPhoneNumber(contact.getUserId(), contact.getPhoneNumber());
+
+            // if exists, return the contact with error message
+            if(!entityResp.isEmpty() && !entityResp.get().isEmpty())
+                return new ServiceResult(HttpStatus.CONFLICT, "Contact already exists");
+
+
+            // create the contact for that user, create a note also if a note was added
+            resp = contactProcessor.mapContactInfoToDto(contactRepository.save(contact));
+
+            // create note for contact if it was added
+            if(dto.getNote() != null && dto.getNote().getNoteText() != null) {
+                dto.getNote().setContactId(resp.getId());
+                NoteDto note = this.noteService.create(dto.getNote()).getData().get(0);
+                resp.setNote(note);
+            }
+
+            return new ServiceResult(HttpStatus.CREATED, "Successfully added Contact", resp);
         }
-
-        // validate userId
-//        ServiceResult userResp = userService.findById(contact.getUserId());
-//        if(userResp.getStatus().isError() || userResp.getData() == null)
-//            return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
-
-
-        // create the contact for that user, create a note also if a note was added
-        resp = contactProcessor.mapContactInfoToDto(contactRepository.save(contact));
-
-        // create note for contact if it was added
-        if(dto.getNote() != null && dto.getNote().getNoteText() != null) {
-            dto.getNote().setContactId(resp.getId());
-            NoteDto note = this.noteService.create(dto.getNote()).getData().get(0);
-            resp.setNote(note);
+        catch (DataAccessException dae) {
+            logger.debug(String.format("Database error with error message: %s", dae.getMessage()));
+            throw dae;
         }
-
-        return new ServiceResult(HttpStatus.CREATED, "Successfully added Contact", resp);
-    }
-
-    @Override
-    public ServiceResult<ContactDto> findAll() {
-        return null;
-    }
-
-    @Override
-    public ServiceResult<ContactDto> findById(UUID id) {
-        return null;
+        catch(Exception e) {
+            logger.debug(String.format("Erorr occured in %s with error %s", this.getClass().getName(), e));
+            throw e;
+        }
     }
 
     @Override
     public ServiceResult<ContactDto> update(ContactDto dto) {
-        ServiceResult badRequest = validateInput(dto);
-        if (badRequest != null || (dto.getId() == null || dto.getId().isEmpty())){
-            if ((dto.getId() == null || dto.getId().isEmpty()))
-                return new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, "ContactId cannot be null");
-        return badRequest;
-        }
-
-        // map
-        Contact contactEntity = contactProcessor.mapContactInfoToEntity(dto);
-
-        Optional<Contact> existingContact = contactRepository.findContactByUserIdAndId(UUID.fromString(dto.getUserId()), contactEntity.getId());
-
-        if (existingContact.isEmpty())
-            return new ServiceResult(HttpStatus.NOT_FOUND, "Unable to update, contact not found");
-
-        // Validate userId
-//        ServiceResult userResp = userService.findById(contactEntity.getUserId());
-//        if (userResp.getStatus().isError() || userResp.getData() == null) {
-//            return new ServiceResult(HttpStatus.BAD_REQUEST, "Invalid user id");
-//        }
-
-        Contact updatedContact = existingContact.get();
-        ContactDto resp;
-
-        // Check if the updated email already exists for another contact
-        if (!dto.getEmail().equals(updatedContact.getEmail())) {
-            Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndEmail(updatedContact.getUserId(), dto.getEmail());
-            if (!entityResp.get().isEmpty())
-                return new ServiceResult(HttpStatus.CONFLICT, "Email already exists");
-        }
-
-        // Check if the updated phone number already exists for another contact
-        if (!dto.getPhoneNumber().equals(updatedContact.getPhoneNumber())) {
-            Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndPhoneNumber(updatedContact.getUserId(), dto.getPhoneNumber());
-            if (!entityResp.get().isEmpty()) {
-                return new ServiceResult(HttpStatus.CONFLICT, "Phone number already exists");
-            }
-        }
-
-
-        // Update the contact with the new data
-        updatedContact.setFirstName(dto.getFirstName());
-        updatedContact.setLastName(dto.getLastName());
-        updatedContact.setEmail(dto.getEmail());
-        updatedContact.setPhoneNumber(dto.getPhoneNumber());
-        updatedContact.setAddress(dto.getAddress());
-
-        // Save the updated contact
-        resp = contactProcessor.mapContactInfoToDto(contactRepository.save(updatedContact));
-
-        // Check if notes were provided and, if so, update the note
-        if (dto.getNote() != null && dto.getNote().getNoteText() != null) {
-            NoteDto noteDto = dto.getNote();
-            noteDto.setContactId(updatedContact.getId().toString());
-            ServiceResult<NoteDto> noteResult = noteService.create(noteDto);
-
-            if (noteResult.getStatus().isError()) {
-                return new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update note");
+        try {
+            ServiceResult badRequest = validateInput(dto);
+            if (badRequest != null || (dto.getId() == null || dto.getId().isEmpty())){
+                if ((dto.getId() == null || dto.getId().isEmpty()))
+                    return new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, "ContactId cannot be null");
+                return badRequest;
             }
 
-            resp.setNote(noteResult.getData().get(0));
-        }
+            // map
+            Contact contactEntity = contactProcessor.mapContactInfoToEntity(dto);
 
-        return new ServiceResult(HttpStatus.OK, "Successfully updated Contact", resp);
+            Optional<Contact> existingContact = contactRepository.findContactByUserIdAndId(UUID.fromString(dto.getUserId()), contactEntity.getId());
+
+            if (existingContact.isEmpty())
+                return new ServiceResult(HttpStatus.NOT_FOUND, "Unable to update, contact not found");
+
+            Contact updatedContact = existingContact.get();
+            ContactDto resp;
+
+            // Check if the updated email already exists for another contact
+            if (!dto.getEmail().equals(updatedContact.getEmail())) {
+                Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndEmail(updatedContact.getUserId(), dto.getEmail());
+                if (!entityResp.get().isEmpty())
+                    return new ServiceResult(HttpStatus.CONFLICT, "Email already exists");
+            }
+
+            // Check if the updated phone number already exists for another contact
+            if (!dto.getPhoneNumber().equals(updatedContact.getPhoneNumber())) {
+                Optional<List<Contact>> entityResp = contactRepository.findContactByUserIdAndPhoneNumber(updatedContact.getUserId(), dto.getPhoneNumber());
+                if (!entityResp.get().isEmpty()) {
+                    return new ServiceResult(HttpStatus.CONFLICT, "Phone number already exists");
+                }
+            }
+
+
+            // Update the contact with the new data
+            updatedContact.setFirstName(dto.getFirstName());
+            updatedContact.setLastName(dto.getLastName());
+            updatedContact.setEmail(dto.getEmail());
+            updatedContact.setPhoneNumber(dto.getPhoneNumber());
+            updatedContact.setAddress(dto.getAddress());
+
+            // Save the updated contact
+            resp = contactProcessor.mapContactInfoToDto(contactRepository.save(updatedContact));
+
+            // Check if notes were provided and, if so, update the note
+            if (dto.getNote() != null && dto.getNote().getNoteText() != null) {
+                NoteDto noteDto = dto.getNote();
+                noteDto.setContactId(updatedContact.getId().toString());
+                ServiceResult<NoteDto> noteResult = noteService.create(noteDto);
+
+                if (noteResult.getStatus().isError()) {
+                    return new ServiceResult(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update note");
+                }
+
+                resp.setNote(noteResult.getData().get(0));
+            }
+
+            return new ServiceResult(HttpStatus.OK, "Successfully updated Contact", resp);
+        }
+        catch (DataAccessException dae) {
+            logger.debug(String.format("Database error with error message: %s", dae.getMessage()));
+            throw dae;
+        }
+        catch(Exception e) {
+            logger.debug(String.format("Erorr occured in %s with error %s", this.getClass().getName(), e));
+            throw e;
+        }
 
     }
 
     @Override
     public ServiceResult<ContactDto> delete(UUID contactId) {
-        Optional<Contact> existingContact = contactRepository.findById(contactId);
+        try{
+            Optional<Contact> existingContact = contactRepository.findById(contactId);
 
-        if (existingContact.isEmpty()) {
-            return new ServiceResult(HttpStatus.NOT_FOUND, "Contact not found");
+            if (existingContact.isEmpty()) {
+                return new ServiceResult(HttpStatus.NOT_FOUND, "Contact not found");
+            }
+
+            // Delete the associated note, if it exists
+            ServiceResult<NoteDto> noteResp = noteService.findByContactId(contactId.toString());
+
+            ServiceResult<NoteDto>  resp;
+            if(noteResp.getStatus().is2xxSuccessful())
+                resp = noteService.delete(UUID.fromString(noteResp.getData().get(0).getId()));
+
+            // Delete the contact
+            contactRepository.deleteById(contactId);
+
+            return new ServiceResult(HttpStatus.OK, "Contact and associated note deleted successfully");
         }
-
-        // Delete the associated note, if it exists
-        ServiceResult<NoteDto> noteResp = noteService.findByContactId(contactId.toString());
-
-        ServiceResult<NoteDto>  resp;
-        if(noteResp.getStatus().is2xxSuccessful())
-            resp = noteService.delete(UUID.fromString(noteResp.getData().get(0).getId()));
-
-        // Delete the contact
-        contactRepository.deleteById(contactId);
-
-        return new ServiceResult(HttpStatus.OK, "Contact and associated note deleted successfully");
-
+        catch (DataAccessException dae) {
+            logger.debug(String.format("Database error with error message: %s", dae.getMessage()));
+            throw dae;
+        }
+        catch(Exception e) {
+            logger.debug(String.format("Erorr occured in %s with error %s", this.getClass().getName(), e));
+            throw e;
+        }
     }
 
-    // ADMIN role
-    // get all contacts with same userId - might need pagination
-
-    // get all contacts with same address
-
-    // get all contacts with same firstName
-
-    // get all contacts with same lastName
-
-    // get all contacts with same phoneNumber
-
-    // get all contacts with same email
-
-    // all operation the manager can perform should be within a userId
-
-
-    // MANAGER ROLE
-    public ServiceResult<List<ContactDto>> findContactbyUserId(UUID id) {
+    public ServiceResult<List<ContactDto>> findContactByUserId(UUID id, Integer pageNumber, Integer pageSize, String sortProperty, String order) {
         try {
+            Pageable pageable;
 
-            Page<Contact> contactPage = contactRepository.findContactsByUserId(id, Pageable.unpaged());
+            if(pageNumber == null && pageSize == null && sortProperty == null)
+                pageable = Pageable.unpaged();
+            // get in ascending order of provided sortProperty by default
+            else if(order == null || order.toLowerCase().equals("asc"))
+                pageable = PageRequest.of(pageNumber, pageSize, Sort.Direction.ASC, sortProperty);
+            else
+                pageable = PageRequest.of(pageNumber, pageSize, Sort.Direction.DESC, sortProperty);
+
+            Page<Contact> contactPage = contactRepository.findContactsByUserId(id, pageable);
 
             if (contactPage.isEmpty())
                 return new ServiceResult( HttpStatus.OK, "Contact is empty", contactPage.get());
@@ -206,9 +211,9 @@ public class ContactService implements BaseService<ContactDto> {
 
             List<ContactDto> enrichedContacts = enrichedContactsFuture.get();
 
-            return new ServiceResult(HttpStatus.OK, "Contacts successfully retrieved", enrichedContacts);
+            return new ServiceResult(HttpStatus.OK, String.format("Contacts successfully retrieved with result: %d", enrichedContacts.size()), enrichedContacts);
         } catch (IllegalArgumentException e) {
-            return new ServiceResult( HttpStatus.BAD_REQUEST, "Invalid userId");
+            return new ServiceResult( HttpStatus.BAD_REQUEST, "Invalid parameter");
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
@@ -242,13 +247,15 @@ public class ContactService implements BaseService<ContactDto> {
         });
     }
 
-    // get all contacts with respect to UserId in order of FirstName
+    @Override
+    public ServiceResult<ContactDto> findAll() {
+        return null;
+    }
 
-    // get all contacts with respect to UserId in order of LastName
-
-    // get all contacts irrespective of userId in order of FirstName - alphabetically
-
-    // get all contacts  irrespective of userId in order of lastName - alphabetically
+    @Override
+    public ServiceResult<ContactDto> findById(UUID id) {
+        return null;
+    }
 
 
 

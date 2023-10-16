@@ -1,7 +1,6 @@
 package com.example.listmanager.user;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,7 +26,6 @@ public class User {
 
 
     public User() {}
-
 
     @PrePersist
     protected void onCreate() {

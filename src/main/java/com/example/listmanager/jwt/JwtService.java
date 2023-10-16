@@ -13,19 +13,22 @@ import com.example.listmanager.user.UserDto;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.JwtParserBuilder;
+
+/**
+ * This class performs jwt related functionalities
+ */
 
 
-
-import java.io.Serializable;
 @Component
 public class JwtService {
-    public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
+    // valid for 5 hours
+    public static final long JWT_TOKEN_VALIDITY = (5 * ((60 * 60)*1000));
 
     @Value("${jwt.secret}")
     private String secret;
@@ -52,7 +55,7 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    public Boolean validateToken(String token, UserDto userInfo) {
+    public Boolean validateToken(String token, UserDetails userInfo) {
         final String username = extractUsername(token);
         return (username.equals(userInfo.getUsername()) && !isTokenExpired(token));
     }
